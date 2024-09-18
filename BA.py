@@ -163,19 +163,58 @@ def bidirectional_search(estado_inicial, estado_objetivo):
     
     return None  # No se encontró solución
 
+def dfs_limitado(estado_actual, estado_objetivo, limite, padres, profundidad):
+    if estado_actual == estado_objetivo:
+        camino = []
+        while estado_actual is not None:
+            camino.append(estado_actual)
+            estado_actual = padres[estado_actual]
+        camino.reverse()
+        return camino
+    
+    if profundidad >= limite:
+        return None
+
+    estado_actual_objeto = Sucesora(estado_actual)
+    for sucesor in estado_actual_objeto.Sucesores:
+        if sucesor not in padres:  # Evitar ciclos
+            padres[sucesor] = estado_actual
+            resultado = dfs_limitado(sucesor, estado_objetivo, limite, padres, profundidad + 1)
+            if resultado is not None:
+                return resultado
+    
+    return None
+
+def iddfs(estado_inicial, estado_objetivo, limite_maximo):
+    for limite in range(limite_maximo + 1):
+        padres = {estado_inicial: None}
+        resultado = dfs_limitado(estado_inicial, estado_objetivo, limite, padres, 0)
+        if resultado is not None:
+            return resultado
+    return None
+
+# Definir el estado inicial
+estado_inicial_ladoA = (3, 3, True, 0, 0, False)
+
+# Definir un límite máximo para la profundidad
+limite_maximo = 20
+
+camino = iddfs(estado_inicial_ladoA, estado_objetivo, limite_maximo)
+
 def main():
     # Menú para elegir el tipo de búsqueda
     print("Seleccione el tipo de búsqueda:")
     print("1. Búsqueda en profundidad (DFS)")
     print("2. Búsqueda en anchura (BFS)")
     print("3. Búsqueda bidireccional")
+    print("4. Búsqueda profundidad iterativa (IDDFS)")
     
-    opcion = input("Ingrese su opción (1, 2 o 3): ")
+    opcion = input("Ingrese su opción (1, 2, 3 0 4): ")
     
     # Validar la opción
-    while opcion not in ['1', '2', '3']:
+    while opcion not in ['1', '2', '3','4']:
         print("Opción no válida. Intente nuevamente.")
-        opcion = input("Ingrese su opción (1, 2 o 3): ")
+        opcion = input("Ingrese su opción (1, 2, 3 0 4): ")
 
     # Medir el tiempo de inicio
     tiempo_inicio = time.time()
@@ -196,8 +235,10 @@ def main():
         soluciones = [bfs(estado_inicial_ladoA, estado_objetivo)]  # BFS retorna una única solución
     elif opcion == '3':
         print("Ejecutando búsqueda bidireccional...")
-        soluciones = [bidirectional_search(estado_inicial_ladoA, estado_objetivo)]  # Bidireccional retorna una única solución
-        
+        soluciones = [bidirectional_search(estado_inicial_ladoA, estado_objetivo)]
+    else:
+        print("Ejecutando búsqueda iterativo por profundidad...")
+        soluciones = [iddfs(estado_inicial_ladoA, estado_objetivo, limite_maximo)]
 
     # Medir el tiempo final
     tiempo_fin = time.time()
