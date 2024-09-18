@@ -100,18 +100,82 @@ def bfs(estado_inicial, estado_objetivo):
     
     return None
 
+# Función para reconstruir el camino desde el punto de encuentro
+def reconstruir_camino(padres_inicio, padres_objetivo, interseccion, estado_inicial, estado_objetivo):
+    # Reconstruir el camino desde el inicio hasta la intersección
+    camino_desde_inicio = []
+    estado_actual = interseccion
+    while estado_actual is not None:
+        camino_desde_inicio.append(estado_actual)
+        estado_actual = padres_inicio[estado_actual]
+    camino_desde_inicio.reverse()  # Invertimos el camino para que vaya desde el inicio a la intersección
+
+    # Reconstruir el camino desde la intersección hasta el objetivo
+    camino_desde_objetivo = []
+    estado_actual = padres_objetivo[interseccion]
+    while estado_actual is not None:
+        camino_desde_objetivo.append(estado_actual)
+        estado_actual = padres_objetivo[estado_actual]
+    
+    return camino_desde_inicio + camino_desde_objetivo
+
+def bidirectional_search(estado_inicial, estado_objetivo):
+    # Cola para la búsqueda desde el inicio y desde el objetivo
+    cola_inicio = deque([estado_inicial])
+    cola_objetivo = deque([estado_objetivo])
+
+    # Diccionarios para rastrear los padres en ambas direcciones
+    padres_inicio = {estado_inicial: None}
+    padres_objetivo = {estado_objetivo: None}
+
+    # Conjuntos visitados
+    visitado_inicio = {estado_inicial}
+    visitado_objetivo = {estado_objetivo}
+
+    while cola_inicio and cola_objetivo:
+        # Expandir desde el inicio
+        estado_actual_inicio = cola_inicio.popleft()
+        sucesores_inicio = Sucesora(estado_actual_inicio)
+        
+        for sucesor in sucesores_inicio.Sucesores:
+            if sucesor not in visitado_inicio:
+                visitado_inicio.add(sucesor)
+                padres_inicio[sucesor] = estado_actual_inicio
+                cola_inicio.append(sucesor)
+            
+            # Si el sucesor está en el conjunto objetivo, encontramos el punto de intersección
+            if sucesor in visitado_objetivo:
+                return reconstruir_camino(padres_inicio, padres_objetivo, sucesor, estado_inicial, estado_objetivo)
+
+        # Expandir desde el objetivo
+        estado_actual_objetivo = cola_objetivo.popleft()
+        sucesores_objetivo = Sucesora(estado_actual_objetivo)
+        
+        for sucesor in sucesores_objetivo.Sucesores:
+            if sucesor not in visitado_objetivo:
+                visitado_objetivo.add(sucesor)
+                padres_objetivo[sucesor] = estado_actual_objetivo
+                cola_objetivo.append(sucesor)
+            
+            # Si el sucesor está en el conjunto inicio, encontramos el punto de intersección
+            if sucesor in visitado_inicio:
+                return reconstruir_camino(padres_inicio, padres_objetivo, sucesor, estado_inicial, estado_objetivo)
+    
+    return None  # No se encontró solución
+
 def main():
     # Menú para elegir el tipo de búsqueda
     print("Seleccione el tipo de búsqueda:")
     print("1. Búsqueda en profundidad (DFS)")
     print("2. Búsqueda en anchura (BFS)")
+    print("3. Búsqueda bidireccional")
     
-    opcion = input("Ingrese su opción (1 o 2): ")
+    opcion = input("Ingrese su opción (1, 2 o 3): ")
     
     # Validar la opción
-    while opcion not in ['1', '2']:
+    while opcion not in ['1', '2', '3']:
         print("Opción no válida. Intente nuevamente.")
-        opcion = input("Ingrese su opción (1 o 2): ")
+        opcion = input("Ingrese su opción (1, 2 o 3): ")
 
     # Medir el tiempo de inicio
     tiempo_inicio = time.time()
@@ -127,9 +191,13 @@ def main():
     if opcion == '1':
         print("Ejecutando búsqueda en profundidad (DFS)...")
         soluciones = dfs(estado_inicial_ladoA, estado_objetivo)
-    else:
+    elif opcion == '2':
         print("Ejecutando búsqueda en anchura (BFS)...")
         soluciones = [bfs(estado_inicial_ladoA, estado_objetivo)]  # BFS retorna una única solución
+    elif opcion == '3':
+        print("Ejecutando búsqueda bidireccional...")
+        soluciones = [bidirectional_search(estado_inicial_ladoA, estado_objetivo)]  # Bidireccional retorna una única solución
+        
 
     # Medir el tiempo final
     tiempo_fin = time.time()
